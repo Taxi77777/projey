@@ -12,11 +12,9 @@
 # limitations under the License.
 # ========= Copyright 2023-2024 @ CAMEL-AI.org. All Rights Reserved. =========
 
+import asyncio
 from abc import ABC, abstractmethod
-from types import TracebackType
-from typing import Any, Dict, Optional, Type
-
-from typing_extensions import Self
+from typing import Any, Dict, List, Optional
 
 from camel.logger import get_logger
 from camel.utils import BatchProcessor
@@ -24,16 +22,36 @@ from camel.utils import BatchProcessor
 logger = get_logger(__name__)
 
 
-class BaseExtractor(ABC):
-    r"""Base class for all response extractors.
+class ExtractorStrategy(ABC):
+    r"""Abstract base class for extraction strategies."""
 
-    An extractor takes the response and extracts the relevant parts,
-    converting them into a format that the verifier can handle.
-    Implements async context manager protocol for proper resource management.
+    @abstractmethod
+    async def extract(self, text: str) -> Optional[str]:
+        r"""Asynchronously extracts relevant parts from text.
+
+        Args:
+            text (str): The input text to process.
+
+        Returns:
+            Optional[str]: Extracted str if successful, otherwise None.
+        """
+        pass
+
+
+class Extractor:
+    r"""Base class for response extractors with a fixed strategy pipeline.
+
+    This extractor:
+    - Uses a **fixed multi-stage pipeline** of extraction strategies.
+    - Tries **each strategy in order** within a stage until one succeeds.
+    - Feeds the **output of one stage into the next** for processing.
+    - Supports **async execution** for efficient processing.
+    - Provides **batch processing and resource monitoring** options.
     """
 
     def __init__(
         self,
+        pipeline: List[List[ExtractorStrategy]],
         cache_templates: bool = True,
         max_cache_size: int = 1000,
         extraction_timeout: float = 30.0,
@@ -43,29 +61,36 @@ class BaseExtractor(ABC):
         memory_threshold: float = 85.0,
         **kwargs,
     ):
-        r"""Initialize the extractor.
+        r"""Initialize the extractor with a multi-stage strategy pipeline.
 
         Args:
-            cache_templates (bool): Whether to cache extraction templates.
-                (default: :obj:`True`)
-            max_cache_size (int): Maximum number of templates to cache.
-                (default: :obj:`1000`)
-            extraction_timeout (float): Maximum time for extraction in seconds.
-                (default: :obj:`30.0`)
-            batch_size (int): Size of batches for parallel extraction.
-                (default: :obj:`10`)
-            monitoring_interval (float): Interval in seconds between resource
-                checks. (default: :obj:`5.0`)
-            cpu_threshold (float): CPU usage percentage threshold for scaling
-                down. (default: :obj:`80.0`)
-            memory_threshold (float): Memory usage percentage threshold for
-                scaling down. (default: :obj:`85.0`)
-            **kwargs: Additional extractor parameters.
-
-        Raises:
-            ValueError: If invalid parameter values are provided
+            pipeline (List[List[ExtractorStrategy]]):
+                A fixed list of lists where each list represents a stage
+                containing extractor strategies executed in order.
+            cache_templates (bool, optional):
+                Whether to enable caching for extraction templates.
+                Defaults to True.
+            max_cache_size (int, optional):
+                Maximum number of cached templates. Defaults to 1000.
+            extraction_timeout (float, optional):
+                Maximum time allowed for an extraction in seconds.
+                Defaults to 30.0.
+            batch_size (int, optional):
+                Number of responses processed in parallel per batch.
+                Defaults to 10.
+            monitoring_interval (float, optional):
+                Interval (in seconds) for checking resource usage.
+                Defaults to 5.0.
+            cpu_threshold (float, optional):
+                CPU usage percentage threshold for scaling down operations.
+                Defaults to 80.0.
+            memory_threshold (float, optional):
+                Memory usage percentage threshold for scaling down operations.
+                Defaults to 85.0.
+            **kwargs:
+                Additional keyword arguments for future extensions.
         """
-        # Store all parameters in metadata dict for compatibility
+
         self._metadata = {
             'cache_templates': cache_templates,
             'max_cache_size': max_cache_size,
@@ -81,42 +106,24 @@ class BaseExtractor(ABC):
         self._cache: Dict[str, Any] = {}
         self._batch_processor: Optional[BatchProcessor] = None
 
-        # Store configuration parameters
-        self._cache_templates = cache_templates
-        self._max_cache_size = max_cache_size
-        self._extraction_timeout = extraction_timeout
-        self._batch_size = batch_size
-        self._monitoring_interval = monitoring_interval
-        self._cpu_threshold = cpu_threshold
-        self._memory_threshold = memory_threshold
+        self._pipeline = pipeline
 
     async def setup(self) -> None:
-        r"""Set up the extractor with necessary resources.
-
-        This method:
-        1. Initializes template cache if enabled
-        2. Sets up any parallel processing resources
-        3. Validates extraction patterns
-
-        Raises:
-            RuntimeError: If initialization fails
-        """
+        r"""Set up the extractor with necessary resources."""
         if self._is_setup:
             logger.debug(f"{self.__class__.__name__} already initialized")
             return
 
         try:
-            # Initialize template cache if enabled
-            if self._cache_templates:
+            if self._metadata["cache_templates"]:
                 self._template_cache: Dict[str, Any] = {}
 
-            # Set up batch processing if needed
-            if self._batch_size > 1:
+            if self._metadata["batch_size"] > 1:
                 self._batch_processor = BatchProcessor(
-                    initial_batch_size=self._batch_size,
-                    monitoring_interval=self._monitoring_interval,
-                    cpu_threshold=self._cpu_threshold,
-                    memory_threshold=self._memory_threshold,
+                    initial_batch_size=self._metadata["batch_size"],
+                    monitoring_interval=self._metadata["monitoring_interval"],
+                    cpu_threshold=self._metadata["cpu_threshold"],
+                    memory_threshold=self._metadata["memory_threshold"],
                 )
 
             self._is_setup = True
@@ -129,21 +136,7 @@ class BaseExtractor(ABC):
             raise RuntimeError(error_msg) from e
 
     async def cleanup(self) -> None:
-        r"""Clean up extractor resources.
-
-        This method handles cleanup of resources and resets the extractor
-        state.
-        It ensures:
-        1. All resources are properly released
-        2. Template cache is cleared
-        3. Parallel processing resources are shutdown
-        4. State is reset to initial
-        5. Cleanup happens even if errors occur
-
-        Raises:
-            RuntimeError: If cleanup fails (after resetting initialization
-                state).
-        """
+        r"""Clean up extractor resources."""
         if not self._is_setup:
             logger.debug(
                 f"{self.__class__.__name__} not initialized, skipping cleanup"
@@ -152,31 +145,20 @@ class BaseExtractor(ABC):
 
         errors = []
         try:
-            # Clear template cache
             if hasattr(self, '_template_cache'):
                 try:
                     self._template_cache.clear()
                 except Exception as e:
                     errors.append(f"Failed to clear template cache: {e}")
 
-            # Shutdown parallel processing
             if self._batch_processor is not None:
                 try:
-                    # Get final performance metrics before cleanup
                     metrics = self._batch_processor.get_performance_metrics()
                     logger.info(f"Batch processor final metrics: {metrics}")
                 except Exception as e:
                     errors.append(
                         f"Failed to get batch processor metrics: {e}"
                     )
-
-            # Preserve init config in metadata
-            self._metadata = {
-                'cache_templates': self._cache_templates,
-                'max_cache_size': self._max_cache_size,
-                'extraction_timeout': self._extraction_timeout,
-                'batch_size': self._batch_size,
-            }
 
             if not errors:
                 logger.info(
@@ -187,77 +169,84 @@ class BaseExtractor(ABC):
             errors.append(f"Unexpected error during cleanup: {e}")
 
         finally:
-            # Always mark as uninitialized, even if cleanup fails
             self._is_setup = False
             self._batch_processor = None
 
         if errors:
-            error_msg = (
-                f"Errors during {self.__class__.__name__} cleanup: "
-                f"{'; '.join(errors)}"
-            )
+            error_msg = f"Errors during cleanup: {'; '.join(errors)}"
             logger.error(error_msg)
             raise RuntimeError(error_msg)
 
-    async def __aenter__(self) -> Self:
+    async def __aenter__(self) -> "Extractor":
         r"""Async context manager entry.
 
         Returns:
-            Self reference for context manager usage.
+            Extractor: The initialized extractor instance.
         """
         await self.setup()
         return self
 
-    async def __aexit__(
-        self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
-    ) -> None:
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         r"""Async context manager exit.
 
         Args:
-            exc_type (Optional[Type[BaseException]]): Exception type if an
-                error occurred.
-            exc_val (Optional[BaseException]): Exception value if an error
-                occurred.
-            exc_tb (Optional[TracebackType]): Exception traceback if an error
-                occurred.
+            exc_type (Optional[Type[BaseException]]): The exception type.
+            exc_val (Optional[BaseException]): The exception instance.
+            exc_tb (Optional[TracebackType]): The exception traceback.
         """
         await self.cleanup()
 
-    @abstractmethod
-    async def extract(
-        self, response: str, context: Optional[Dict[str, Any]] = None
-    ) -> str:
-        r"""Extract relevant parts from a response.
-
-        Extracts:
-        1. Final answer or output
-        2. Chain of thought reasoning steps
-        3. Difficulty assessment
+    async def extract(self, response: str) -> Optional[str]:
+        r"""Extracts a normalized, comparable part of the LLM response
+        using the fixed multi-stage strategy pipeline.
 
         Args:
-            response (str): Raw response from agent generation.
-            context (Optional[Dict[str, Any]]): Optional context for
-            extraction like:
-                - final_answer
-                - rationale
-                - complexity
+            response (str): The raw response text.
 
         Returns:
-            str: Extracted content string.
-
-        Raises:
-            ValueError: If response is empty or invalid.
-            NotImplementedError: If no implementation is provided.
-            RuntimeError: If extractor is not initialized.
+            Optional[str]: Extracted data if successful, otherwise None.
         """
         if not self._is_setup:
             raise RuntimeError(
-                f"{self.__class__.__name__} must be initialized "
-                "before extraction"
+                "Extractor must be initialized before extraction"
             )
         if not response or not response.strip():
             raise ValueError("Empty or whitespace-only response")
-        raise NotImplementedError("Subclasses must implement extract()")
+
+        current_input = response  # Initial input
+
+        for stage in self._pipeline:
+            stage_success = (
+                False  # Track if any strategy in the stage succeeds
+            )
+
+            for strategy in stage:
+                try:
+                    # Apply the extraction timeout
+                    result = await asyncio.wait_for(
+                        strategy.extract(current_input),
+                        timeout=self._metadata["extraction_timeout"],
+                    )
+
+                    if result is not None:
+                        current_input = result  # Feed into next stage
+                        stage_success = True
+                        break  # Move to next stage if valid extraction occurs
+
+                except asyncio.TimeoutError:
+                    logger.warning(
+                        f"Strategy {strategy.__class__.__name__} timed out "
+                        f"after {self._metadata['extraction_timeout']} seconds"
+                    )
+                except Exception as e:
+                    logger.warning(
+                        f"Strategy {strategy.__class__.__name__} failed: {e}"
+                    )
+
+            if not stage_success:
+                logger.debug(
+                    "No strategy in stage succeeded, stopping extraction."
+                )
+                return None  # Stop processing if the stage fails
+
+        return current_input  # Final processed output
