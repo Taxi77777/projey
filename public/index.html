@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- SEO Meta Tags -->
+    <title>Taxi Marne-la-Vallée - Réservation Disneyland Paris | App Officielle</title>
+    <meta name="description" content="Application officielle Taxi Marne-la-Vallée. Réservation taxi Disneyland Paris, transport privé CDG Orly, estimation prix taxi rapide. Service taxi légal sans inscription.">
+    <meta name="keywords" content="taxi marne-la-vallée, réservation taxi disneyland, transport privé paris disney, taxi pas cher val europe, trajet cdg orly, réserver taxi bussy, application taxi sans compte, estimation prix taxi rapide">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Taxi Marne-la-Vallée - Réservation Disneyland">
+    <meta property="og:description" content="Réservation taxi Disneyland • Transport CDG Orly • App sans inscription">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://taxi-marne-app-demo.vercel.app">
+    <meta property="og:image" content="https://taxi-marne-app-demo.vercel.app/taxi-logo.png">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Taxi Marne-la-Vallée - Réservation Disneyland">
+    <meta name="twitter:description" content="Réservation taxi Disneyland • Transport CDG Orly • App sans inscription">
+    
+    <!-- App Meta Tags -->
+    <meta name="application-name" content="Taxi Marne-la-Vallée">
+    <meta name="apple-mobile-web-app-title" content="Taxi MLV">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Schema.org JSON-LD for SEO -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Taxi Marne-la-Vallée",
+        "description": "Application officielle de réservation taxi pour Marne-la-Vallée, Disneyland Paris et aéroports CDG/Orly",
+        "url": "https://taxi-marne-app-demo.vercel.app",
+        "applicationCategory": "Transportation",
+        "operatingSystem": "Web, Android, iOS",
+        "offers": {
+            "@type": "Offer",
+            "description": "Service de taxi légal avec tarifs transparents jour/nuit"
+        },
+        "provider": {
+            "@type": "Organization",
+            "name": "Taxi Marne-la-Vallée",
+            "url": "https://www.taximarnelavallee.com",
+            "telephone": "+33750535658",
+            "email": "contact@taximarnelavallee.com"
+        },
+        "serviceArea": {
+            "@type": "Place",
+            "name": "Marne-la-Vallée et Île-de-France"
+        }
+    }
+    </script>
+    
+    <!-- Styles de base -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #ffffff;
+            color: #000000;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        #root {
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Loading animation */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #1a237e 0%, #3f51b5 100%);
+            color: white;
+            flex-direction: column;
+        }
+        
+        .loading-text {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid #ffd700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            body {
+                font-size: 14px;
+            }
+        }
+        
+        /* Hide elements during SSR */
+        .no-js {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <noscript>
+        <div style="padding: 20px; text-align: center; background: #f5f5f5;">
+            <h1>🚖 Taxi Marne-la-Vallée</h1>
+            <p>Pour utiliser cette application, veuillez activer JavaScript dans votre navigateur.</p>
+            <p>Contactez-nous directement :</p>
+            <p>📞 WhatsApp : +33 7 50 53 56 58</p>
+            <p>📧 Email : contact@taximarnelavallee.com</p>
+            <p>🌐 Site web : <a href="https://www.taximarnelavallee.com">www.taximarnelavallee.com</a></p>
+        </div>
+    </noscript>
+    
+    <div id="root">
+        <!-- Loading state -->
+        <div class="loading">
+            <div class="loading-text">🚖 Taxi Marne-la-Vallée</div>
+            <div class="spinner"></div>
+            <p style="margin-top: 20px; opacity: 0.8;">Chargement de l'application...</p>
+        </div>
+    </div>
+    
+    <!-- App will be mounted here -->
+</body>
+</html>
