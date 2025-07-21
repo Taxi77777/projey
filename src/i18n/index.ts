@@ -1,19 +1,28 @@
 import { fr } from './fr';
 import { en } from './en';
 import { es } from './es';
+import { de } from './de';
+import { it } from './it';
+import { ar } from './ar';
 
-export type Language = 'fr' | 'en' | 'es';
+export type Language = 'fr' | 'en' | 'es' | 'de' | 'it' | 'ar';
 
 export const translations = {
   fr,
   en,
   es,
+  de,
+  it,
+  ar,
 };
 
 export const supportedLanguages = [
   { code: 'fr', name: 'Français', flag: '🇫🇷' },
   { code: 'en', name: 'English', flag: '🇬🇧' },
   { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+  { code: 'ar', name: 'العربية', flag: '🇸🇦' },
 ];
 
 // Default language
