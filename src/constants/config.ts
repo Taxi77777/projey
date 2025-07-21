@@ -14,6 +14,8 @@ export const CONFIG = {
   CONTACT: {
     WHATSAPP_NUMBER: '+33750535658',
     EMAIL: 'contact@taximarnelavallee.com',
+    OWNER_EMAIL: 'rachidleg77@gmail.com',
+    FORMSPREE_ENDPOINT: 'https://formspree.io/f/myzwoaoz',
     COMPANY_NAME: 'Taxi Marne-la-Vallée',
   },
   

@@ -79,27 +79,77 @@ Merci de confirmer la disponibilité au client.`;
   }
 
   /**
-   * Send booking via Email
+   * Send booking via Email using Formspree
    */
   async sendEmailBooking(booking: BookingForm): Promise<boolean> {
     try {
       const subject = this.formatEmailSubject(booking);
-      const body = this.formatBookingMessage(booking);
+      const message = this.formatBookingMessage(booking);
       
-      const encodedSubject = encodeURIComponent(subject);
-      const encodedBody = encodeURIComponent(body);
+      // Préparer les données pour Formspree
+      const formData = new FormData();
+      formData.append('email', 'rachidleg77@gmail.com'); // Email de destination
+      formData.append('subject', subject);
+      formData.append('message', message);
+      formData.append('_replyto', booking.email); // Email du client pour répondre
+      formData.append('customer_name', `${booking.firstName} ${booking.lastName}`);
+      formData.append('customer_phone', `${booking.countryCode} ${booking.phone}`);
+      formData.append('departure', booking.quote.departure.address);
+      formData.append('destination', booking.quote.destination.address);
+      formData.append('trip_date', booking.quote.date.toLocaleDateString('fr-FR'));
+      formData.append('trip_time', booking.quote.time);
+      formData.append('price', `€${booking.quote.price.toFixed(2)}`);
+      formData.append('passengers', booking.passengers.toString());
+      formData.append('luggage', booking.luggage.toString());
       
-      const emailUrl = `mailto:${CONFIG.CONTACT.EMAIL}?subject=${encodedSubject}&body=${encodedBody}`;
+      // Envoyer via Formspree
+      const response = await fetch('https://formspree.io/f/myzwoaoz', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
       
-      const canOpen = await Linking.canOpenURL(emailUrl);
-      if (canOpen) {
-        await Linking.openURL(emailUrl);
+      if (response.ok) {
+        console.log('Email sent successfully via Formspree');
         return true;
       } else {
-        throw new Error('Cannot open email client');
+        console.error('Formspree error:', response.status, response.statusText);
+        
+        // Fallback vers mailto si Formspree échoue
+        const encodedSubject = encodeURIComponent(subject);
+        const encodedBody = encodeURIComponent(message);
+        const emailUrl = `mailto:rachidleg77@gmail.com?subject=${encodedSubject}&body=${encodedBody}`;
+        
+        const canOpen = await Linking.canOpenURL(emailUrl);
+        if (canOpen) {
+          await Linking.openURL(emailUrl);
+          return true;
+        }
+        
+        return false;
       }
     } catch (error) {
       console.error('Error sending email:', error);
+      
+      // Fallback vers mailto en cas d'erreur
+      try {
+        const subject = this.formatEmailSubject(booking);
+        const body = this.formatBookingMessage(booking);
+        const encodedSubject = encodeURIComponent(subject);
+        const encodedBody = encodeURIComponent(body);
+        const emailUrl = `mailto:rachidleg77@gmail.com?subject=${encodedSubject}&body=${encodedBody}`;
+        
+        const canOpen = await Linking.canOpenURL(emailUrl);
+        if (canOpen) {
+          await Linking.openURL(emailUrl);
+          return true;
+        }
+      } catch (fallbackError) {
+        console.error('Fallback email error:', fallbackError);
+      }
+      
       return false;
     }
   }
