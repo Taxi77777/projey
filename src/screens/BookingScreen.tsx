@@ -67,6 +67,12 @@ const BookingScreen: React.FC = () => {
   const [luggage, setLuggage] = useState('0');
   const [loading, setLoading] = useState(false);
 
+  // Auto-select vehicle based on passenger count
+  const getRecommendedVehicle = () => {
+    const passengerCount = parseInt(passengers) || 1;
+    return passengerCount <= 4 ? CONFIG.VEHICLES.PEUGEOT_508 : CONFIG.VEHICLES.MERCEDES_V;
+  };
+
   // Country picker state
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
@@ -444,6 +450,30 @@ const BookingScreen: React.FC = () => {
                 placeholder="0"
                 placeholderTextColor="#999"
               />
+            </View>
+          </View>
+
+          {/* Vehicle Recommendation */}
+          <View style={styles.vehicleRecommendation}>
+            <Text style={styles.vehicleRecommendationTitle}>
+              🚗 Véhicule recommandé
+            </Text>
+            <View style={styles.recommendedVehicleCard}>
+              <Text style={styles.vehicleEmoji}>{getRecommendedVehicle().emoji}</Text>
+              <View style={styles.vehicleDetails}>
+                <Text style={styles.vehicleModel}>{getRecommendedVehicle().model}</Text>
+                <Text style={styles.vehicleCapacity}>
+                  Jusqu'à {getRecommendedVehicle().capacity} passagers
+                </Text>
+                <Text style={styles.vehicleDescription}>
+                  {getRecommendedVehicle().description}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.vehicleFeatures}>
+              {getRecommendedVehicle().features.map((feature, index) => (
+                <Text key={index} style={styles.featureTag}>✓ {feature}</Text>
+              ))}
             </View>
           </View>
         </View>
@@ -905,6 +935,64 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#2e7d32',
     textAlign: 'center',
+  },
+  vehicleRecommendation: {
+    backgroundColor: '#f0f8ff',
+    marginTop: 20,
+    padding: 15,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: CONFIG.COLORS.PRIMARY,
+  },
+  vehicleRecommendationTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: CONFIG.COLORS.PRIMARY,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  recommendedVehicleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  vehicleEmoji: {
+    fontSize: 32,
+    marginRight: 15,
+  },
+  vehicleDetails: {
+    flex: 1,
+  },
+  vehicleModel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: CONFIG.COLORS.BLACK,
+    marginBottom: 2,
+  },
+  vehicleCapacity: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 2,
+  },
+  vehicleDescription: {
+    fontSize: 12,
+    color: CONFIG.COLORS.PRIMARY,
+    fontStyle: 'italic',
+  },
+  vehicleFeatures: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  featureTag: {
+    fontSize: 11,
+    color: CONFIG.COLORS.PRIMARY,
+    backgroundColor: CONFIG.COLORS.WHITE,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: CONFIG.COLORS.PRIMARY,
   },
   bottomSpacing: {
     height: 50,

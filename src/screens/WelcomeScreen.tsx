@@ -119,6 +119,56 @@ const WelcomeScreen: React.FC = () => {
           <Text style={styles.priceNote}>{i18n.t('legal.priceInfo')}</Text>
         </View>
 
+        {/* Fleet Section */}
+        <View style={styles.fleetSection}>
+          <Text style={styles.sectionTitle}>🚗 Notre Flotte Premium</Text>
+          
+          <View style={styles.vehicleCard}>
+            <View style={styles.vehicleHeader}>
+              <Text style={styles.vehicleEmoji}>{CONFIG.VEHICLES.PEUGEOT_508.emoji}</Text>
+              <View style={styles.vehicleInfo}>
+                <Text style={styles.vehicleModel}>{CONFIG.VEHICLES.PEUGEOT_508.model}</Text>
+                <Text style={styles.vehicleCapacity}>Jusqu'à {CONFIG.VEHICLES.PEUGEOT_508.capacity} passagers</Text>
+              </View>
+            </View>
+            <Text style={styles.vehicleDescription}>{CONFIG.VEHICLES.PEUGEOT_508.description}</Text>
+            <View style={styles.featuresList}>
+              {CONFIG.VEHICLES.PEUGEOT_508.features.map((feature, index) => (
+                <Text key={index} style={styles.vehicleFeature}>✓ {feature}</Text>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.vehicleCard}>
+            <View style={styles.vehicleHeader}>
+              <Text style={styles.vehicleEmoji}>{CONFIG.VEHICLES.MERCEDES_V.emoji}</Text>
+              <View style={styles.vehicleInfo}>
+                <Text style={styles.vehicleModel}>{CONFIG.VEHICLES.MERCEDES_V.model}</Text>
+                <Text style={styles.vehicleCapacity}>Jusqu'à {CONFIG.VEHICLES.MERCEDES_V.capacity} passagers</Text>
+              </View>
+            </View>
+            <Text style={styles.vehicleDescription}>{CONFIG.VEHICLES.MERCEDES_V.description}</Text>
+            <View style={styles.featuresList}>
+              {CONFIG.VEHICLES.MERCEDES_V.features.map((feature, index) => (
+                <Text key={index} style={styles.vehicleFeature}>✓ {feature}</Text>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.paymentSection}>
+            <Text style={styles.paymentTitle}>💳 Paiement Simple & Sans Inscription</Text>
+            <Text style={styles.paymentPolicy}>{CONFIG.PAYMENT.policy}</Text>
+            <View style={styles.paymentMethods}>
+              {CONFIG.PAYMENT.methods.map((method, index) => (
+                <Text key={index} style={styles.paymentMethod}>✓ {method}</Text>
+              ))}
+            </View>
+            <Text style={styles.noAdvanceText}>
+              ⚡ Réservation 100% GRATUITE - Aucun paiement en ligne requis
+            </Text>
+          </View>
+        </View>
+
         {/* Service Areas - SEO Critical */}
         <View style={styles.serviceSection}>
           <Text style={styles.sectionTitle}>🗺️ {i18n.t('welcome.serviceAreas')}</Text>
@@ -334,6 +384,102 @@ const styles = StyleSheet.create({
     color: '#666',
     fontStyle: 'italic',
     marginTop: 8,
+  },
+  fleetSection: {
+    margin: 20,
+    padding: 15,
+    backgroundColor: CONFIG.COLORS.WHITE,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  vehicleCard: {
+    backgroundColor: CONFIG.COLORS.GRAY,
+    marginBottom: 15,
+    padding: 15,
+    borderRadius: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: CONFIG.COLORS.SECONDARY,
+  },
+  vehicleHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  vehicleEmoji: {
+    fontSize: 32,
+    marginRight: 15,
+  },
+  vehicleInfo: {
+    flex: 1,
+  },
+  vehicleModel: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: CONFIG.COLORS.PRIMARY,
+    marginBottom: 2,
+  },
+  vehicleCapacity: {
+    fontSize: 14,
+    color: '#666',
+  },
+  vehicleDescription: {
+    fontSize: 14,
+    color: CONFIG.COLORS.BLACK,
+    marginBottom: 10,
+    fontStyle: 'italic',
+  },
+  featuresList: {
+    gap: 5,
+  },
+  vehicleFeature: {
+    fontSize: 13,
+    color: CONFIG.COLORS.PRIMARY,
+    fontWeight: '500',
+  },
+  paymentSection: {
+    backgroundColor: '#e8f5e8',
+    padding: 15,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#c8e6c9',
+    marginTop: 10,
+  },
+  paymentTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: CONFIG.COLORS.PRIMARY,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  paymentPolicy: {
+    fontSize: 14,
+    color: '#2e7d32',
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  paymentMethods: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 10,
+  },
+  paymentMethod: {
+    fontSize: 12,
+    color: '#2e7d32',
+    fontWeight: '500',
+  },
+  noAdvanceText: {
+    fontSize: 14,
+    color: '#1b5e20',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    backgroundColor: CONFIG.COLORS.SECONDARY,
+    padding: 8,
+    borderRadius: 8,
   },
   serviceSection: {
     margin: 20,

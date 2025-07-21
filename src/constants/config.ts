@@ -18,6 +18,33 @@ export const CONFIG = {
     FORMSPREE_ENDPOINT: 'https://formspree.io/f/myzwoaoz',
     COMPANY_NAME: 'Taxi Marne-la-Vallée',
   },
+
+  // Fleet information
+  VEHICLES: {
+    PEUGEOT_508: {
+      model: 'Peugeot 508 Hybride',
+      capacity: 4,
+      type: 'berline',
+      features: ['Hybride', 'Climatisation', 'GPS', 'WiFi'],
+      emoji: '🚗',
+      description: 'Berline hybride confortable et écologique'
+    },
+    MERCEDES_V: {
+      model: 'Mercedes Classe V',
+      capacity: 7,
+      type: 'van',
+      features: ['7 places', 'Climatisation', 'Espace bagages', 'Confort premium'],
+      emoji: '🚐',
+      description: 'Van premium pour groupes et familles'
+    }
+  },
+
+  // Payment information
+  PAYMENT: {
+    methods: ['Espèces', 'Carte bancaire', 'Chèque'],
+    policy: 'Paiement à bord du véhicule uniquement',
+    noAdvancePayment: true,
+  },
   
   // Service areas - prioritized cities for SEO
   SERVICE_AREAS: {
